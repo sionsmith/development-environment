@@ -1,0 +1,38 @@
+---
+# Playbook for provising development environment on local VM
+# Installs: Java / Maven / Docker / Ansible
+
+- hosts: all
+  sudo: yes
+  tasks:
+    - name: Update apt cache if needed
+      apt: update_cache=yes cache_valid_time=3600
+    - name: Install PyCurl (required for apt-repository updates)
+      apt: pkg=python-pycurl
+    - name: Install Oracle Java Repo Installer Repository
+      apt_repository: repo=ppa:webupd8team/java update-cache=yes
+    - name: Wizardry to bypass the Oracle License File prompt
+      shell: echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections
+    - name: Install Oracle Java 1.8.0_05
+      apt: pkg=oracle-java8-installer
+    - name: Install Maven 3.0.5
+      apt: pkg=maven
+    - name: Install docker 1.0.0
+      shell: >
+        curl -s https://get.docker.io/ubuntu/ | sudo sh
+    - name: add user docker group
+      shell: >
+        gpasswd -a vagrant docker
+    - name: Restart docker service
+      shell: >
+        service docker restart
+    - name: Add ansible to apt-get repo
+      apt_repository: repo=ppa:rquillo/ansible update-cache=yes
+    - name: Install Ansible
+      apt: pkg=ansible
+    - name: Install Pip
+      apt: pkg=python-pip
+    - name: Install Boto (AWS communication)
+      shell: pip install -U boto
+    - name: Copy .bash_profile to user home
+      copy: src=../.bash_profile dest=/home/vagrant/.bash_profile owner=vagrant group=vagrant
